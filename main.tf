@@ -111,17 +111,16 @@ resource "aws_security_group" "web" {
 # Create Launch Configuration
 resource "aws_launch_configuration" "my_config" {
   name          = "MyLaunchConfig"
-  image_id      = "ami-0ccabb5f82d4c9af5"
+  image_id      = "ami-024e6efaf93d85776"
   instance_type = "t2.micro"
   security_groups = [aws_security_group.web.id]
 
   user_data = <<-EOT
                 #!/bin/bash
-                sudo yum update -y
-                sudo yum install -y python3
-                sudo yum install -y python3-pip
-                sudo pip3 install ansible
-                sudo pip3 install flask
+                sudo snap install docker 
+                sudo apt install git
+                sudo docker pull projiadt/weeb:lat
+                sudo docker run -d -p 8080:80 projiadt/weeb:lat
                 EOT
 
   lifecycle {
@@ -135,7 +134,7 @@ resource "aws_autoscaling_group" "my_asg" {
   min_size             = 1
   max_size             = 5
   desired_capacity     = 3
-  vpc_zone_identifier  = aws_subnet.subnets[*].id
+  vpc_zone_identifier  = [aws_subnet.subnets[0].id]
 
   tag {
     key                 = "Name"
