@@ -133,7 +133,7 @@ resource "aws_autoscaling_group" "my_asg" {
   launch_configuration = aws_launch_configuration.my_config.name
   min_size             = 1
   max_size             = 5
-  desired_capacity     = 3
+  desired_capacity     = 2
   vpc_zone_identifier  = [aws_subnet.subnets[0].id]
 
   tag {
