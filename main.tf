@@ -1,5 +1,8 @@
 provider "aws" {
   region = "us-east-2"
+} 
+data "aws_availability_zones" "available" {
+  state = "available"
 }
 
 # Create VPC
@@ -18,7 +21,7 @@ resource "aws_subnet" "subnets" {
   count                   = 3
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.${count.index}.0/24"
-
+  availability_zone       = element(data.aws_availability_zones.available.names, count.index)
   map_public_ip_on_launch = count.index < 2 ? true : false
 
   tags = {
@@ -119,8 +122,8 @@ resource "aws_launch_configuration" "my_config" {
                 #!/bin/bash
                 sudo snap install docker 
                 sudo apt install git
-                sudo docker pull projiadt/weeb:lat
-                sudo docker run -d -p 8080:80 projiadt/weeb:lat
+                sudo docker pull projiadt/weeb:final
+                sudo docker run -d -p 8080:80 projiadt/weeb:final
                 sudo wget https://raw.githubusercontent.com/finalprojiadt/iadt/main/cpu.py
                 sudo wget https://raw.githubusercontent.com/finalprojiadt/iadt/main/mykey.pub
                 sudo cat /mykey.pub >> /home/ubuntu/.ssh/authorized_keys
@@ -131,6 +134,72 @@ resource "aws_launch_configuration" "my_config" {
   }
 }
 
+# ALB Security Group
+resource "aws_security_group" "alb_sg" {
+  name   = "ALB_SG"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_lb" "my_alb" {
+  name               = "my-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb_sg.id]
+  subnets            = [aws_subnet.subnets[0].id, aws_subnet.subnets[1].id]
+
+  enable_deletion_protection         = false
+  enable_cross_zone_load_balancing   = true
+}
+
+resource "aws_lb_listener" "front_end" {
+  load_balancer_arn = aws_lb.my_alb.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.my_tg.arn
+  }
+}
+
+resource "aws_lb_target_group" "my_tg" {
+  name     = "my-tg"
+  port     = 8080
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+}
+
+# Route53 setup for domain 
+resource "aws_route53_zone" "my_zone" {
+  name = "projiadt.com"
+}
+
+resource "aws_route53_record" "my_record" {
+  zone_id = aws_route53_zone.my_zone.zone_id
+  name    = "projiadt.com"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.my_alb.dns_name
+    zone_id                = aws_lb.my_alb.zone_id
+    evaluate_target_health = true
+  }
+}
+
 # Create AutoScaling Group
 resource "aws_autoscaling_group" "my_asg" {
   launch_configuration = aws_launch_configuration.my_config.name
@@ -138,6 +207,7 @@ resource "aws_autoscaling_group" "my_asg" {
   max_size             = 5
   desired_capacity     = 2
   vpc_zone_identifier  = [aws_subnet.subnets[0].id]
+  target_group_arns = [aws_lb_target_group.my_tg.arn]
 
   tag {
     key                 = "Name"
@@ -151,7 +221,7 @@ resource "aws_autoscaling_policy" "scale_up" {
   name                   = "scale-up"
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
-  cooldown               = 300
+  cooldown               = 180
   autoscaling_group_name = aws_autoscaling_group.my_asg.name
 }
 
@@ -160,7 +230,7 @@ resource "aws_autoscaling_policy" "scale_down" {
   name                   = "scale-down"
   scaling_adjustment     = -1
   adjustment_type        = "ChangeInCapacity"
-  cooldown               = 300
+  cooldown               = 180
   autoscaling_group_name = aws_autoscaling_group.my_asg.name
 }
 
@@ -168,10 +238,10 @@ resource "aws_autoscaling_policy" "scale_down" {
 resource "aws_cloudwatch_metric_alarm" "scale_up_alarm" {
   alarm_name          = "scale-up-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = "2"
+  evaluation_periods  = "1"
   metric_name         = "CPUUtilization"
   namespace           = "AWS/EC2"
-  period              = "120"
+  period              = "30"
   statistic           = "Average"
   threshold           = "70"
   alarm_description   = "This metric triggers when CPU usage exceeds 70%"
@@ -182,10 +252,10 @@ resource "aws_cloudwatch_metric_alarm" "scale_up_alarm" {
 resource "aws_cloudwatch_metric_alarm" "scale_down_alarm" {
   alarm_name          = "scale-down-alarm"
   comparison_operator = "LessThanOrEqualToThreshold"
-  evaluation_periods  = "2"
+  evaluation_periods  = "1"
   metric_name         = "CPUUtilization"
   namespace           = "AWS/EC2"
-  period              = "120"
+  period              = "30"
   statistic           = "Average"
   threshold           = "40"
   alarm_description   = "This metric triggers when CPU usage falls below 40%"
