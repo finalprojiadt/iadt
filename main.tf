@@ -185,12 +185,12 @@ resource "aws_lb_target_group" "my_tg" {
 
 # Route53 setup for domain 
 resource "aws_route53_zone" "my_zone" {
-  name = "projiadt.com"
+  name = "projiadt.online"
 }
 
 resource "aws_route53_record" "my_record" {
   zone_id = aws_route53_zone.my_zone.zone_id
-  name    = "projiadt.com"
+  name    = "projiadt.online"
   type    = "A"
 
   alias {
@@ -205,7 +205,7 @@ resource "aws_autoscaling_group" "my_asg" {
   launch_configuration = aws_launch_configuration.my_config.name
   min_size             = 1
   max_size             = 5
-  desired_capacity     = 2
+  desired_capacity     = 1
   vpc_zone_identifier  = [aws_subnet.subnets[0].id, aws_subnet.subnets[1].id] 
   target_group_arns = [aws_lb_target_group.my_tg.arn]
 
