@@ -25,7 +25,7 @@
             width: 100px;
             height: 100px;
             font-size: 24px;
-            font-weight: bold; /* Bold font for "X" and "O" */
+            font-weight: bold;
             border: 1px solid #ddd;
             display: flex;
             align-items: center;
@@ -35,27 +35,29 @@
         #status {
             font-size: 24px;
             font-weight: bold;
-            color: #4caf50; /* Green color for "Tic Tac Toe" message */
+            color: #4caf50;
             margin-top: 20px;
         }
         #credits {
             font-size: 18px;
             font-weight: bold;
-            color: #3333cc; /* Blue color for project credits */
+            color: #3333cc;
             margin-top: 20px;
         }
         .cell:nth-child(odd) {
-            background-color: #f0f0f0; /* Light gray background for odd tiles */
+            background-color: #f0f0f0;
         }
         .cell:nth-child(even) {
-            background-color: #f8f8f8; /* Lighter gray background for even tiles */
+            background-color: #f8f8f8;
         }
         h1 {
-            font-family: 'Pacifico', cursive; /* Fancy font for "Tic Tac Toe" */
-            color: #3333cc; /* Blue color for "Tic Tac Toe" */
+            font-family: 'Lora', serif;
+            font-weight: 500;
+            font-style: italic;
+            color: #3333cc;
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -72,6 +74,7 @@
             <div class="cell" onclick="makeMove(8)"></div>
         </div>
         <p id="status"></p>
+        <button id="resetButton" onclick="resetGame()" style="display: none;">Reset Game</button>
         <p id="credits">Project by Shah Nawaz Syed Shah, Ali Goudarzi, and Rohit Wagh</p>
     </div>
 
@@ -92,9 +95,9 @@
 
         function checkWinner() {
             const winningCombos = [
-                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-                [0, 4, 8], [2, 4, 6] // Diagonals
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
             ];
 
             for (const combo of winningCombos) {
@@ -104,7 +107,7 @@
                     cells[a].textContent === cells[c].textContent) {
                     document.getElementById('status').textContent = `${cells[a].textContent} wins!`;
                     gameActive = false;
-                    return;
+                    break;
                 }
             }
 
@@ -112,6 +115,20 @@
                 document.getElementById('status').textContent = "It's a tie!";
                 gameActive = false;
             }
+
+            if (!gameActive) {
+                document.getElementById('resetButton').style.display = 'block';
+            }
+        }
+
+        function resetGame() {
+            cells.forEach(cell => {
+                cell.textContent = '';
+            });
+            currentPlayer = 'X';
+            gameActive = true;
+            document.getElementById('status').textContent = '';
+            document.getElementById('resetButton').style.display = 'none';
         }
     </script>
 </body>
