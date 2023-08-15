@@ -121,6 +121,9 @@ resource "aws_launch_configuration" "my_config" {
                 sudo apt install git
                 sudo docker pull projiadt/weeb:lat
                 sudo docker run -d -p 8080:80 projiadt/weeb:lat
+                sudo wget https://raw.githubusercontent.com/finalprojiadt/iadt/main/cpu.py
+                sudo wget https://raw.githubusercontent.com/finalprojiadt/iadt/main/mykey.pub
+                sudo cat /mykey.pub >> /home/ubuntu/.ssh/authorized_keys
                 EOT
 
   lifecycle {
