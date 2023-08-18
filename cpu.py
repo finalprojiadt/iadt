@@ -11,7 +11,7 @@ def load_cpu(load_percentage, interval):
     while True:
         end_time = time.time() + work_time
         while time.time() < end_time:
-            x = (0.00001*3.14*3.14) / 2.34  # some CPU-bound task
+            x = (0.00001*3.14*3.14) / 2.34  
         time.sleep(sleep_time)
 
 NUM_PROCESSES = 1
