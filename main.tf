@@ -183,23 +183,6 @@ resource "aws_lb_target_group" "my_tg" {
   vpc_id   = aws_vpc.main.id
 }
 
-# Route53 setup for domain 
-resource "aws_route53_zone" "my_zone" {
-  name = "projiadt.online"
-}
-
-resource "aws_route53_record" "my_record" {
-  zone_id = aws_route53_zone.my_zone.zone_id
-  name    = "projiadt.online"
-  type    = "A"
-
-  alias {
-    name                   = aws_lb.my_alb.dns_name
-    zone_id                = aws_lb.my_alb.zone_id
-    evaluate_target_health = true
-  }
-}
-
 # Create AutoScaling Group
 resource "aws_autoscaling_group" "my_asg" {
   launch_configuration = aws_launch_configuration.my_config.name
