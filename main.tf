@@ -123,7 +123,8 @@ resource "aws_launch_configuration" "my_config" {
                 sudo snap install docker 
                 sudo apt install git
                 sudo docker pull projiadt/weeb:final
-                sudo docker run -d -p 8080:80 projiadt/weeb:final
+                sudo docker run -d -p 8080:80 --name=my_container projiadt/weeb:final
+                sudo docker exec my_container sed -i "/Rohit Wagh/a <p>IP Address: $(hostname -i)</p>" /usr/src/app/index.html  
                 sudo wget https://raw.githubusercontent.com/finalprojiadt/iadt/main/cpu.py
                 sudo wget https://raw.githubusercontent.com/finalprojiadt/iadt/main/mykey.pub
                 sudo cat /mykey.pub >> /home/ubuntu/.ssh/authorized_keys
